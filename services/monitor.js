@@ -106,6 +106,80 @@ export function updateBotPresence(client, isOnline, activeServer = null) {
   }
 }
 
+export let currentChannelId = config.channelId || '';
+
+/**
+ * Imposta manualmente il canale per le notifiche (es. via /impostacanale).
+ * @param {string} channelId 
+ */
+export function setTargetChannel(channelId) {
+  currentChannelId = channelId;
+  console.log(`[Monitor] Canale notifiche impostato su: ${channelId}`);
+}
+
+/**
+ * Recupera o rileva automaticamente il canale in cui inviare le notifiche.
+ * @param {import('discord.js').Client} client 
+ * @returns {Promise<import('discord.js').TextBasedChannel|null>}
+ */
+export async function getNotificationChannel(client) {
+  // 1. Se è configurato esplicitamente un canale, usalo
+  if (currentChannelId) {
+    const channel = client.channels.cache.get(currentChannelId) || await client.channels.fetch(currentChannelId).catch(() => null);
+    if (channel && channel.isTextBased()) return channel;
+  }
+
+  // 2. Altrimenti, prova ad auto-rilevare il canale più adatto nei server in cui è presente il bot
+  for (const [, guild] of client.guilds.cache) {
+    try {
+      const channels = await guild.channels.fetch();
+      
+      // Cerca per parole chiave (cobblemon, minecraft, server, notifiche, generale)
+      const keywords = ['cobblemon', 'minecraft', 'mc', 'server', 'notifiche', 'generale', 'general'];
+      let candidate = null;
+
+      for (const [, ch] of channels) {
+        if (!ch || !ch.isTextBased()) continue;
+        const perms = ch.permissionsFor(client.user);
+        if (!perms || !perms.has('SendMessages')) continue;
+
+        const name = ch.name.toLowerCase();
+        for (const kw of keywords) {
+          if (name.includes(kw)) {
+            candidate = ch;
+            break;
+          }
+        }
+        if (candidate) break;
+      }
+
+      // Se non trova corrispondenze nei nomi, usa il systemChannel del server o il primo canale testuale
+      if (!candidate && guild.systemChannel && guild.systemChannel.permissionsFor(client.user)?.has('SendMessages')) {
+        candidate = guild.systemChannel;
+      }
+
+      if (!candidate) {
+        for (const [, ch] of channels) {
+          if (ch && ch.isTextBased() && ch.permissionsFor(client.user)?.has('SendMessages')) {
+            candidate = ch;
+            break;
+          }
+        }
+      }
+
+      if (candidate) {
+        currentChannelId = candidate.id;
+        console.log(`[Monitor] Canale rilevato automaticamente: #${candidate.name} (ID: ${candidate.id}) nel server ${guild.name}`);
+        return candidate;
+      }
+    } catch (e) {
+      console.warn(`[Monitor] Impossibile rilevare canale nel server ${guild.name}:`, e.message);
+    }
+  }
+
+  return null;
+}
+
 /**
  * Esegue il controllo dello stato e invia messaggi nel canale se lo stato è cambiato.
  * @param {import('discord.js').Client} client 
@@ -130,14 +204,8 @@ export async function checkServerStatus(client) {
       return;
     }
 
-    // Se il canale Discord non è configurato, esci
-    if (!config.channelId) {
-      return;
-    }
-
-    const channel = client.channels.cache.get(config.channelId) || await client.channels.fetch(config.channelId).catch(() => null);
-    if (!channel || !channel.isTextBased()) {
-      console.warn(`[Monitor] Canale con ID ${config.channelId} non trovato o non testuale.`);
+    const channel = await getNotificationChannel(client);
+    if (!channel) {
       return;
     }
 

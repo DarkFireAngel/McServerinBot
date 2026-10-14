@@ -11,6 +11,7 @@ import { startMonitoring } from './services/monitor.js';
 
 import * as cmdListaPlayer from './commands/listaplayer.js';
 import * as cmdStatus from './commands/status.js';
+import * as cmdImpostaCanale from './commands/impostacanale.js';
 
 // Creazione del client Discord
 const client = new Client({
@@ -21,6 +22,7 @@ const client = new Client({
 client.commands = new Collection();
 client.commands.set(cmdListaPlayer.data.name, cmdListaPlayer);
 client.commands.set(cmdStatus.data.name, cmdStatus);
+client.commands.set(cmdImpostaCanale.data.name, cmdImpostaCanale);
 
 /**
  * Registra gli Slash Commands sulle API di Discord.
@@ -33,7 +35,8 @@ async function registerSlashCommands() {
 
   const commands = [
     cmdListaPlayer.data.toJSON(),
-    cmdStatus.data.toJSON()
+    cmdStatus.data.toJSON(),
+    cmdImpostaCanale.data.toJSON()
   ];
 
   const rest = new REST({ version: '10' }).setToken(config.discordToken);
@@ -41,25 +44,39 @@ async function registerSlashCommands() {
   try {
     console.log(`[Slash Commands] Inizio registrazione di ${commands.length} comandi...`);
 
-    if (config.guildId) {
-      // Registrazione istantanea per server specifico
+    // 1. Registra su ogni server in cui il bot si trova per renderli utilizzabili istantaneamente
+    for (const [guildId, guild] of client.guilds.cache) {
+      await rest.put(
+        Routes.applicationGuildCommands(config.clientId, guildId),
+        { body: commands }
+      ).catch(e => console.warn(`[Slash Commands] Impossibile registrare sul server ${guild.name}:`, e.message));
+      console.log(`[Slash Commands] Comandi registrati istantaneamente per il server: ${guild.name} (${guildId})`);
+    }
+
+    // 2. Se è specificato un GUILD_ID esplicito, registralo anche lì
+    if (config.guildId && !client.guilds.cache.has(config.guildId)) {
       await rest.put(
         Routes.applicationGuildCommands(config.clientId, config.guildId),
         { body: commands }
-      );
-      console.log(`[Slash Commands] Comandi registrati con successo per il server ${config.guildId}!`);
-    } else {
-      // Registrazione globale
-      await rest.put(
-        Routes.applicationCommands(config.clientId),
-        { body: commands }
-      );
-      console.log('[Slash Commands] Comandi registrati globalmente con successo!');
+      ).catch(() => {});
     }
+
+    // 3. Registrazione globale
+    await rest.put(
+      Routes.applicationCommands(config.clientId),
+      { body: commands }
+    );
+    console.log('[Slash Commands] Comandi registrati globalmente con successo!');
   } catch (error) {
     console.error('[Slash Commands] Errore durante la registrazione dei comandi:', error);
   }
 }
+
+// Quando il bot viene aggiunto a un nuovo server
+client.on('guildCreate', async (guild) => {
+  console.log(`[Bot] Aggiunto al nuovo server: ${guild.name} (${guild.id})`);
+  await registerSlashCommands();
+});
 
 // Gestione interazioni (Slash Commands)
 client.on('interactionCreate', async (interaction) => {
