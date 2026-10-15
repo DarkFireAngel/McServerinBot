@@ -11,7 +11,7 @@ export async function execute(interaction) {
 
   if (!channel || !channel.isTextBased()) {
     return await interaction.reply({
-      content: '❌ Questo comando può essere eseguito solo all\'interno di un canale testuale.',
+      content: '[-] Questo comando può essere eseguito solo all\'interno di un canale testuale.',
       ephemeral: true
     });
   }
@@ -19,9 +19,9 @@ export async function execute(interaction) {
   setTargetChannel(channel.id);
 
   const embed = new EmbedBuilder()
-    .setTitle('✅ Canale Notifiche Configurato!')
+    .setTitle('[✓] Canale Notifiche Configurato')
     .setColor(0x2ecc71)
-    .setDescription(`D'ora in poi, invierò in questo canale (<#${channel.id}>) tutti gli avvisi su:\n• 🟢 **Server Aperto**\n• 🔴 **Server Chiuso**\n• 🔄 **Cambi di Host**`)
+    .setDescription(`D'ora in poi invierò in questo canale (<#${channel.id}>) tutti gli avvisi su:\n• [●] **Server Aperto**\n• [○] **Server Chiuso**\n• [►] **Cambi di Host**`)
     .setFooter({ text: 'Cobblemon Server Monitor' })
     .setTimestamp();
 

@@ -13,26 +13,17 @@ let lastState = {
  * @returns {EmbedBuilder}
  */
 export function createServerOpenEmbed(serverInfo) {
-  const embed = new EmbedBuilder()
-    .setTitle('🟢 SERVER APERTO!')
+  return new EmbedBuilder()
+    .setTitle('[●] SERVER APERTO')
     .setColor(0x2ecc71)
-    .setDescription(`Il server **Cobblemon** è ora **ONLINE**! Entra subito a giocare.`)
+    .setDescription(`Il server **Cobblemon** è ora **ONLINE**.`)
     .addFields(
-      { name: '👑 Host Attivo', value: `**${serverInfo.name}**`, inline: true },
-      { name: '🌐 Indirizzo / IP', value: `\`${serverInfo.host}\``, inline: true },
-      { name: '🔌 Porta', value: `\`${serverInfo.port}\``, inline: true },
-      { name: '👥 Giocatori', value: `${serverInfo.playersOnline} / ${serverInfo.playersMax}`, inline: true },
-      { name: '⚡ Latenza', value: serverInfo.latency ? `${serverInfo.latency} ms` : 'N/D', inline: true },
-      { name: '📦 Versione', value: serverInfo.version || '1.21.1', inline: true }
+      { name: 'Host Attivo', value: `**${serverInfo.name}**`, inline: true },
+      { name: 'IP', value: `\`${serverInfo.host}\``, inline: true },
+      { name: 'Giocatori', value: `${serverInfo.playersOnline} / ${serverInfo.playersMax}`, inline: true }
     )
     .setTimestamp()
     .setFooter({ text: 'Cobblemon Server Monitor' });
-
-  if (serverInfo.motd) {
-    embed.addFields({ name: '📜 MOTD', value: serverInfo.motd });
-  }
-
-  return embed;
 }
 
 /**
@@ -42,13 +33,13 @@ export function createServerOpenEmbed(serverInfo) {
  */
 export function createHostChangedEmbed(serverInfo) {
   return new EmbedBuilder()
-    .setTitle('🔄 HOST CAMBIATO!')
+    .setTitle('[►] HOST CAMBIATO')
     .setColor(0xf39c12)
-    .setDescription(`L'host del server Cobblemon è cambiato! Ora il server è aperto su **${serverInfo.name}**.`)
+    .setDescription(`L'host del server Cobblemon è cambiato in **${serverInfo.name}**.`)
     .addFields(
-      { name: '👑 Nuovo Host', value: `**${serverInfo.name}**`, inline: true },
-      { name: '🌐 Nuovo IP', value: `\`${serverInfo.host}\``, inline: true },
-      { name: '👥 Giocatori', value: `${serverInfo.playersOnline} / ${serverInfo.playersMax}`, inline: true }
+      { name: 'Nuovo Host', value: `**${serverInfo.name}**`, inline: true },
+      { name: 'IP', value: `\`${serverInfo.host}\``, inline: true },
+      { name: 'Giocatori', value: `${serverInfo.playersOnline} / ${serverInfo.playersMax}`, inline: true }
     )
     .setTimestamp()
     .setFooter({ text: 'Cobblemon Server Monitor' });
@@ -61,9 +52,9 @@ export function createHostChangedEmbed(serverInfo) {
  */
 export function createServerClosedEmbed(lastHostName = null) {
   const embed = new EmbedBuilder()
-    .setTitle('🔴 SERVER CHIUSO')
+    .setTitle('[○] SERVER CHIUSO')
     .setColor(0xe74c3c)
-    .setDescription('Il server Cobblemon è attualmente **OFFLINE** su entrambi gli host (Angy e Rick).')
+    .setDescription('Il server Cobblemon è attualmente **OFFLINE**.')
     .setTimestamp()
     .setFooter({ text: 'Cobblemon Server Monitor' });
 
@@ -98,7 +89,7 @@ export function updateBotPresence(client, isOnline, activeServer = null) {
       status: 'idle',
       activities: [
         {
-          name: 'Server Offline 🔴',
+          name: 'Server Offline',
           type: ActivityType.Custom
         }
       ]

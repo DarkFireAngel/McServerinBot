@@ -10,6 +10,7 @@ import { config } from './config.js';
 import { startMonitoring } from './services/monitor.js';
 
 import * as cmdListaPlayer from './commands/listaplayer.js';
+import * as cmdListaGiocatori from './commands/listagiocatori.js';
 import * as cmdStatus from './commands/status.js';
 import * as cmdImpostaCanale from './commands/impostacanale.js';
 
@@ -21,6 +22,7 @@ const client = new Client({
 // Registrazione locale dei comandi
 client.commands = new Collection();
 client.commands.set(cmdListaPlayer.data.name, cmdListaPlayer);
+client.commands.set(cmdListaGiocatori.data.name, cmdListaGiocatori);
 client.commands.set(cmdStatus.data.name, cmdStatus);
 client.commands.set(cmdImpostaCanale.data.name, cmdImpostaCanale);
 
@@ -35,6 +37,7 @@ async function registerSlashCommands() {
 
   const commands = [
     cmdListaPlayer.data.toJSON(),
+    cmdListaGiocatori.data.toJSON(),
     cmdStatus.data.toJSON(),
     cmdImpostaCanale.data.toJSON()
   ];
@@ -90,7 +93,7 @@ client.on('interactionCreate', async (interaction) => {
   } catch (error) {
     console.error(`[Command Error] Errore eseguendo /${interaction.commandName}:`, error);
     const reply = {
-      content: '❌ Si è verificato un errore durante l\'esecuzione di questo comando!',
+      content: '[-] Si è verificato un errore durante l\'esecuzione di questo comando!',
       ephemeral: true
     };
     if (interaction.deferred || interaction.replied) {
@@ -104,9 +107,9 @@ client.on('interactionCreate', async (interaction) => {
 // Evento quando il bot è pronto
 client.once('ready', async () => {
   console.log(`\n========================================`);
-  console.log(`🤖 Bot Discord online come: ${client.user.tag}`);
-  console.log(`📡 Canale notifiche configurato: ${config.channelId || '(Nessun canale configurato)'}`);
-  console.log(`⏱️ Intervallo controllo: ${config.checkIntervalSeconds}s`);
+  console.log(`[*] Bot Discord online come: ${client.user.tag}`);
+  console.log(`[*] Canale notifiche configurato: ${config.channelId || '(Nessun canale configurato)'}`);
+  console.log(`[*] Intervallo controllo: ${config.checkIntervalSeconds}s`);
   console.log(`========================================\n`);
 
   // Registra o aggiorna gli Slash Commands
@@ -141,10 +144,10 @@ function startHealthServer() {
 startHealthServer();
 
 if (!config.discordToken) {
-  console.error('\n❌ ERRORE: DISCORD_TOKEN non trovato nel file .env!');
+  console.error('\n[-] ERRORE: DISCORD_TOKEN non trovato nel file .env!');
   console.error('Copia il file .env.example in .env e inserisci il token del tuo bot Discord.\n');
 } else {
   client.login(config.discordToken).catch((err) => {
-    console.error('❌ Errore durante il login su Discord:', err.message);
+    console.error('[-] Errore durante il login su Discord:', err.message);
   });
 }
